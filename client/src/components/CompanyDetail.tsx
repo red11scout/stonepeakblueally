@@ -60,9 +60,21 @@ export function CompanyDetail({ company, onClose }: CompanyDetailProps) {
       <div className="p-4 border-b border-border">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h2 className="font-mono text-lg font-semibold text-foreground truncate">
-              {company.name}
-            </h2>
+            <div className="flex items-center gap-3">
+              {company.logoUrl && (
+                <img 
+                  src={`${company.logoUrl}?size=128`}
+                  alt={company.name}
+                  className="w-10 h-10 rounded-lg object-contain bg-white/10 p-1 shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              )}
+              <h2 className="font-mono text-lg font-semibold text-foreground truncate">
+                {company.name}
+              </h2>
+            </div>
             <div className="flex items-center gap-2 mt-1">
               <span 
                 className="text-xs px-2 py-0.5 rounded font-mono"

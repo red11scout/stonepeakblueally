@@ -139,6 +139,16 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                         className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: quadrantConfig.color }}
                       />
+                      {company.logoUrl && (
+                        <img 
+                          src={`${company.logoUrl}?size=64`}
+                          alt={company.name}
+                          className="w-5 h-5 rounded object-contain bg-white/10 shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      )}
                       <span className="font-mono text-sm text-foreground truncate">
                         {company.name}
                       </span>

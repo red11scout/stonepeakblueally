@@ -268,8 +268,20 @@ export function IFMMatrix({
               }}
             >
               <div className="bg-card border border-border rounded-md p-3 shadow-xl min-w-[200px]">
-                <div className="font-mono text-sm font-semibold text-foreground">
-                  {hoveredCompany.name}
+                <div className="flex items-center gap-2">
+                  {hoveredCompany.logoUrl && (
+                    <img 
+                      src={`${hoveredCompany.logoUrl}?size=64`}
+                      alt={hoveredCompany.name}
+                      className="w-6 h-6 rounded object-contain bg-white/10"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  )}
+                  <div className="font-mono text-sm font-semibold text-foreground">
+                    {hoveredCompany.name}
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   {hoveredCompany.category}

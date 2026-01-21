@@ -11,6 +11,7 @@ export type Category =
 
 export interface Company {
   name: string;
+  logoUrl?: string;
   category: Category;
   employees: number;
   impactScore: number;
