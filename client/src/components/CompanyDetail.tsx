@@ -13,6 +13,7 @@ import type { Company } from '@/types/portfolio';
 import { QUADRANT_CONFIG, CATEGORY_CONFIG, TIER_CONFIG } from '@/types/portfolio';
 import { formatRevenue, formatEmployees } from '@/hooks/usePortfolioData';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface CompanyDetailProps {
   company: Company;
@@ -44,6 +45,8 @@ function ScoreBar({ label, value, maxValue = 10, icon }: ScoreBarProps) {
 }
 
 export function CompanyDetail({ company, onClose }: CompanyDetailProps) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const quadrantConfig = QUADRANT_CONFIG[company.quadrant];
   const categoryConfig = CATEGORY_CONFIG[company.category];
   const tierConfig = TIER_CONFIG[company.tier];
@@ -65,7 +68,10 @@ export function CompanyDetail({ company, onClose }: CompanyDetailProps) {
                 <img 
                   src={`${company.logoUrl}?size=128`}
                   alt={company.name}
-                  className="w-10 h-10 rounded-lg object-contain bg-white/10 p-1 shrink-0"
+                  className={cn(
+                    "w-10 h-10 rounded-lg object-contain p-1 shrink-0",
+                    isDark ? "bg-white/10" : "bg-slate-100"
+                  )}
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}

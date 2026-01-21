@@ -1,7 +1,7 @@
 /**
  * IFM Matrix Component
  * Interactive scatter plot visualization for Impact-Feasibility Matrix
- * Design: Financial Terminal Precision - dark theme with quadrant colors
+ * Design: Financial Terminal Precision - supports both light and dark themes
  */
 
 import { useRef, useState, useCallback, useMemo } from 'react';
@@ -10,6 +10,7 @@ import type { Company, Quadrant } from '@/types/portfolio';
 import { QUADRANT_CONFIG, CATEGORY_CONFIG } from '@/types/portfolio';
 import { formatRevenue, formatEmployees } from '@/hooks/usePortfolioData';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface IFMMatrixProps {
   companies: Company[];
@@ -42,6 +43,22 @@ function getDotSize(revenue: number): number {
   return 10;
 }
 
+// Theme-aware quadrant colors
+const QUADRANT_COLORS = {
+  light: {
+    Champions: { color: '#16a34a', bgColor: 'rgba(22, 163, 74, 0.12)' },
+    Strategic: { color: '#2563eb', bgColor: 'rgba(37, 99, 235, 0.12)' },
+    'Quick Wins': { color: '#ea580c', bgColor: 'rgba(234, 88, 12, 0.12)' },
+    Foundation: { color: '#64748b', bgColor: 'rgba(100, 116, 139, 0.12)' }
+  },
+  dark: {
+    Champions: { color: '#238636', bgColor: 'rgba(35, 134, 54, 0.15)' },
+    Strategic: { color: '#1F6FEB', bgColor: 'rgba(31, 111, 235, 0.15)' },
+    'Quick Wins': { color: '#F0883E', bgColor: 'rgba(240, 136, 62, 0.15)' },
+    Foundation: { color: '#6E7681', bgColor: 'rgba(110, 118, 129, 0.12)' }
+  }
+};
+
 export function IFMMatrix({ 
   companies, 
   selectedCompany, 
@@ -51,6 +68,10 @@ export function IFMMatrix({
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredCompany, setHoveredCompany] = useState<Company | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const { theme } = useTheme();
+  
+  const isDark = theme === 'dark';
+  const quadrantColors = isDark ? QUADRANT_COLORS.dark : QUADRANT_COLORS.light;
 
   // Calculate threshold position
   const thresholdPercent = scoreToPercent(threshold);
@@ -84,7 +105,10 @@ export function IFMMatrix({
       {/* Matrix Container */}
       <div 
         ref={containerRef}
-        className="relative w-full h-full bg-[#0D1117] rounded-lg border border-border overflow-hidden crosshair-cursor"
+        className={cn(
+          "relative w-full h-full rounded-lg border border-border overflow-hidden crosshair-cursor",
+          isDark ? "bg-[#0D1117]" : "bg-[#f8fafc]"
+        )}
         onMouseMove={handleMouseMove}
         onClick={() => onSelectCompany(null)}
       >
@@ -101,7 +125,7 @@ export function IFMMatrix({
               bottom: `${thresholdPercent}%`,
               right: 0,
               top: 0,
-              background: QUADRANT_CONFIG['Champions'].bgColor
+              background: quadrantColors['Champions'].bgColor
             }}
           />
           {/* Strategic - top left */}
@@ -112,7 +136,7 @@ export function IFMMatrix({
               bottom: `${thresholdPercent}%`,
               right: `${100 - thresholdPercent}%`,
               top: 0,
-              background: QUADRANT_CONFIG['Strategic'].bgColor
+              background: quadrantColors['Strategic'].bgColor
             }}
           />
           {/* Quick Wins - bottom right */}
@@ -123,7 +147,7 @@ export function IFMMatrix({
               top: `${thresholdPercent}%`,
               right: 0,
               bottom: 0,
-              background: QUADRANT_CONFIG['Quick Wins'].bgColor
+              background: quadrantColors['Quick Wins'].bgColor
             }}
           />
           {/* Foundation - bottom left */}
@@ -134,14 +158,17 @@ export function IFMMatrix({
               top: `${thresholdPercent}%`,
               right: `${100 - thresholdPercent}%`,
               bottom: 0,
-              background: QUADRANT_CONFIG['Foundation'].bgColor
+              background: quadrantColors['Foundation'].bgColor
             }}
           />
         </div>
 
         {/* Threshold lines */}
         <div 
-          className="absolute w-px bg-border/50"
+          className={cn(
+            "absolute w-px",
+            isDark ? "bg-white/20" : "bg-slate-400/40"
+          )}
           style={{ 
             left: `${thresholdPercent}%`, 
             top: 0, 
@@ -149,7 +176,10 @@ export function IFMMatrix({
           }}
         />
         <div 
-          className="absolute h-px bg-border/50"
+          className={cn(
+            "absolute h-px",
+            isDark ? "bg-white/20" : "bg-slate-400/40"
+          )}
           style={{ 
             bottom: `${thresholdPercent}%`, 
             left: 0, 
@@ -158,16 +188,28 @@ export function IFMMatrix({
         />
 
         {/* Quadrant labels */}
-        <div className="absolute top-3 right-3 text-xs font-mono text-[#238636]/70">
+        <div 
+          className="absolute top-3 right-3 text-xs font-mono"
+          style={{ color: isDark ? 'rgba(35, 134, 54, 0.7)' : 'rgba(22, 163, 74, 0.8)' }}
+        >
           CHAMPIONS ({quadrantStats['Champions']})
         </div>
-        <div className="absolute top-3 left-3 text-xs font-mono text-[#1F6FEB]/70">
+        <div 
+          className="absolute top-3 left-3 text-xs font-mono"
+          style={{ color: isDark ? 'rgba(31, 111, 235, 0.7)' : 'rgba(37, 99, 235, 0.8)' }}
+        >
           STRATEGIC ({quadrantStats['Strategic']})
         </div>
-        <div className="absolute bottom-3 right-3 text-xs font-mono text-[#F0883E]/70">
+        <div 
+          className="absolute bottom-3 right-3 text-xs font-mono"
+          style={{ color: isDark ? 'rgba(240, 136, 62, 0.7)' : 'rgba(234, 88, 12, 0.8)' }}
+        >
           QUICK WINS ({quadrantStats['Quick Wins']})
         </div>
-        <div className="absolute bottom-3 left-3 text-xs font-mono text-[#6E7681]/70">
+        <div 
+          className="absolute bottom-3 left-3 text-xs font-mono"
+          style={{ color: isDark ? 'rgba(110, 118, 129, 0.7)' : 'rgba(100, 116, 139, 0.8)' }}
+        >
           FOUNDATION ({quadrantStats['Foundation']})
         </div>
 
@@ -209,7 +251,7 @@ export function IFMMatrix({
             const size = getDotSize(company.revenue || 0);
             const isSelected = selectedCompany?.name === company.name;
             const isHovered = hoveredCompany?.name === company.name;
-            const quadrantColor = QUADRANT_CONFIG[company.quadrant].color;
+            const quadrantColor = quadrantColors[company.quadrant].color;
             const categoryColor = CATEGORY_CONFIG[company.category]?.color || '#888';
 
             return (
@@ -229,7 +271,10 @@ export function IFMMatrix({
                 }}
                 className={cn(
                   "absolute rounded-full cursor-pointer transition-shadow duration-150",
-                  isSelected && "ring-2 ring-white ring-offset-2 ring-offset-[#0D1117]",
+                  isSelected && (isDark 
+                    ? "ring-2 ring-white ring-offset-2 ring-offset-[#0D1117]"
+                    : "ring-2 ring-slate-800 ring-offset-2 ring-offset-[#f8fafc]"
+                  ),
                   company.quadrant === 'Champions' && "glow-champions",
                   company.quadrant === 'Strategic' && "glow-strategic",
                   company.quadrant === 'Quick Wins' && "glow-quickwins"
@@ -273,7 +318,10 @@ export function IFMMatrix({
                     <img 
                       src={`${hoveredCompany.logoUrl}?size=64`}
                       alt={hoveredCompany.name}
-                      className="w-6 h-6 rounded object-contain bg-white/10"
+                      className={cn(
+                        "w-6 h-6 rounded object-contain",
+                        isDark ? "bg-white/10" : "bg-slate-100"
+                      )}
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
@@ -309,8 +357,8 @@ export function IFMMatrix({
                 <div 
                   className="mt-2 px-2 py-1 rounded text-xs font-mono text-center"
                   style={{ 
-                    backgroundColor: QUADRANT_CONFIG[hoveredCompany.quadrant].bgColor,
-                    color: QUADRANT_CONFIG[hoveredCompany.quadrant].color
+                    backgroundColor: quadrantColors[hoveredCompany.quadrant].bgColor,
+                    color: quadrantColors[hoveredCompany.quadrant].color
                   }}
                 >
                   {hoveredCompany.quadrant}

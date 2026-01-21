@@ -48,47 +48,53 @@
   --color-strategic: oklch(0.623 0.214 259.815);
   --color-quickwins: oklch(0.75 0.183 55);
   --color-foundation: oklch(0.556 0.016 286);
+  /* Matrix background for theming */
+  --color-matrix-bg: var(--matrix-bg);
 }
 
+/* Light mode (default) - Professional financial dashboard */
 :root {
   --radius: 0.5rem;
-  /* Dark terminal theme */
-  --background: oklch(0.13 0.015 250);
-  --foreground: oklch(0.93 0.01 250);
-  --card: oklch(0.17 0.015 250);
-  --card-foreground: oklch(0.93 0.01 250);
-  --popover: oklch(0.17 0.015 250);
-  --popover-foreground: oklch(0.93 0.01 250);
-  --primary: oklch(0.623 0.214 259.815);
+  /* Light theme - clean, professional */
+  --background: oklch(0.98 0.005 250);
+  --foreground: oklch(0.15 0.015 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.015 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.015 250);
+  --primary: oklch(0.45 0.2 250);
   --primary-foreground: oklch(0.98 0.005 250);
-  --secondary: oklch(0.21 0.015 250);
-  --secondary-foreground: oklch(0.85 0.01 250);
-  --muted: oklch(0.25 0.015 250);
-  --muted-foreground: oklch(0.65 0.015 250);
-  --accent: oklch(0.25 0.015 250);
-  --accent-foreground: oklch(0.93 0.01 250);
-  --destructive: oklch(0.65 0.2 25);
+  --secondary: oklch(0.95 0.005 250);
+  --secondary-foreground: oklch(0.25 0.015 250);
+  --muted: oklch(0.93 0.005 250);
+  --muted-foreground: oklch(0.45 0.015 250);
+  --accent: oklch(0.93 0.005 250);
+  --accent-foreground: oklch(0.15 0.015 250);
+  --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0.005 250);
-  --border: oklch(0.28 0.015 250);
-  --input: oklch(0.28 0.015 250);
-  --ring: oklch(0.623 0.214 259.815);
+  --border: oklch(0.88 0.01 250);
+  --input: oklch(0.88 0.01 250);
+  --ring: oklch(0.45 0.2 250);
   /* Chart colors - quadrant themed */
-  --chart-1: oklch(0.627 0.194 142.5);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.75 0.183 55);
-  --chart-4: oklch(0.556 0.016 286);
-  --chart-5: oklch(0.7 0.15 330);
+  --chart-1: oklch(0.5 0.18 142.5);
+  --chart-2: oklch(0.5 0.2 259.815);
+  --chart-3: oklch(0.6 0.18 55);
+  --chart-4: oklch(0.45 0.02 286);
+  --chart-5: oklch(0.55 0.15 330);
   /* Sidebar */
-  --sidebar: oklch(0.15 0.015 250);
-  --sidebar-foreground: oklch(0.93 0.01 250);
-  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar: oklch(0.97 0.005 250);
+  --sidebar-foreground: oklch(0.15 0.015 250);
+  --sidebar-primary: oklch(0.45 0.2 250);
   --sidebar-primary-foreground: oklch(0.98 0.005 250);
-  --sidebar-accent: oklch(0.21 0.015 250);
-  --sidebar-accent-foreground: oklch(0.93 0.01 250);
-  --sidebar-border: oklch(0.28 0.015 250);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --sidebar-accent: oklch(0.93 0.005 250);
+  --sidebar-accent-foreground: oklch(0.15 0.015 250);
+  --sidebar-border: oklch(0.88 0.01 250);
+  --sidebar-ring: oklch(0.45 0.2 250);
+  /* Matrix background */
+  --matrix-bg: oklch(0.96 0.005 250);
 }
 
+/* Dark mode - Terminal precision */
 .dark {
   --background: oklch(0.13 0.015 250);
   --foreground: oklch(0.93 0.01 250);
@@ -122,6 +128,7 @@
   --sidebar-accent-foreground: oklch(0.93 0.01 250);
   --sidebar-border: oklch(0.28 0.015 250);
   --sidebar-ring: oklch(0.623 0.214 259.815);
+  --matrix-bg: oklch(0.08 0.015 250);
 }
 
 @layer base {
@@ -179,22 +186,35 @@
     font-feature-settings: 'tnum' on, 'lnum' on;
   }
 
-  /* Quadrant colors */
+  /* Quadrant colors - consistent across themes */
   .quadrant-champions {
-    --quadrant-color: oklch(0.627 0.194 142.5);
+    --quadrant-color: oklch(0.5 0.18 142.5);
     color: var(--quadrant-color);
   }
   .quadrant-strategic {
-    --quadrant-color: oklch(0.623 0.214 259.815);
+    --quadrant-color: oklch(0.5 0.2 259.815);
     color: var(--quadrant-color);
   }
   .quadrant-quickwins {
-    --quadrant-color: oklch(0.75 0.183 55);
+    --quadrant-color: oklch(0.6 0.18 55);
     color: var(--quadrant-color);
   }
   .quadrant-foundation {
-    --quadrant-color: oklch(0.556 0.016 286);
+    --quadrant-color: oklch(0.45 0.02 286);
     color: var(--quadrant-color);
+  }
+
+  .dark .quadrant-champions {
+    --quadrant-color: oklch(0.627 0.194 142.5);
+  }
+  .dark .quadrant-strategic {
+    --quadrant-color: oklch(0.623 0.214 259.815);
+  }
+  .dark .quadrant-quickwins {
+    --quadrant-color: oklch(0.75 0.183 55);
+  }
+  .dark .quadrant-foundation {
+    --quadrant-color: oklch(0.556 0.016 286);
   }
 
   .bg-quadrant-champions {
@@ -210,20 +230,36 @@
     background-color: oklch(0.556 0.016 286);
   }
 
-  /* Category colors */
+  /* Category colors - adjusted for light mode readability */
   .category-digital {
-    color: oklch(0.7 0.15 220);
+    color: oklch(0.5 0.15 220);
   }
   .category-energy {
-    color: oklch(0.65 0.18 145);
+    color: oklch(0.45 0.18 145);
   }
   .category-transport {
-    color: oklch(0.7 0.18 30);
+    color: oklch(0.5 0.18 30);
   }
   .category-social {
-    color: oklch(0.7 0.15 330);
+    color: oklch(0.5 0.15 330);
   }
   .category-realestate {
+    color: oklch(0.45 0.12 280);
+  }
+
+  .dark .category-digital {
+    color: oklch(0.7 0.15 220);
+  }
+  .dark .category-energy {
+    color: oklch(0.65 0.18 145);
+  }
+  .dark .category-transport {
+    color: oklch(0.7 0.18 30);
+  }
+  .dark .category-social {
+    color: oklch(0.7 0.15 330);
+  }
+  .dark .category-realestate {
     color: oklch(0.65 0.12 280);
   }
 
@@ -241,12 +277,18 @@
     box-shadow: 0 0 12px oklch(0.556 0.016 286 / 0.3);
   }
 
-  /* Grid overlay pattern */
+  /* Grid overlay pattern - theme aware */
   .grid-overlay {
+    background-image: 
+      linear-gradient(oklch(0.5 0.01 250 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.5 0.01 250 / 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .dark .grid-overlay {
     background-image: 
       linear-gradient(oklch(0.4 0.01 250 / 0.1) 1px, transparent 1px),
       linear-gradient(90deg, oklch(0.4 0.01 250 / 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
   }
 
   /* Crosshair cursor for matrix */
@@ -254,19 +296,29 @@
     cursor: crosshair;
   }
 
-  /* Scrollbar styling */
+  /* Scrollbar styling - theme aware */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: oklch(0.17 0.015 250);
+    background: oklch(0.93 0.005 250);
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.35 0.015 250);
+    background: oklch(0.75 0.01 250);
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.65 0.01 250);
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: oklch(0.17 0.015 250);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: oklch(0.35 0.015 250);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
     background: oklch(0.45 0.015 250);
   }
 }

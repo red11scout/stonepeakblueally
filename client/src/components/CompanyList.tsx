@@ -13,6 +13,7 @@ import type { Company, Quadrant } from '@/types/portfolio';
 import { QUADRANT_CONFIG, CATEGORY_CONFIG } from '@/types/portfolio';
 import { formatRevenue, formatEmployees } from '@/hooks/usePortfolioData';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface CompanyListProps {
   companies: Company[];
@@ -29,6 +30,8 @@ interface SortConfig {
 }
 
 export function CompanyList({ companies, selectedCompany, onSelectCompany }: CompanyListProps) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: 'priorityScore',
     direction: 'desc'
@@ -143,7 +146,10 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                         <img 
                           src={`${company.logoUrl}?size=64`}
                           alt={company.name}
-                          className="w-5 h-5 rounded object-contain bg-white/10 shrink-0"
+                          className={cn(
+                            "w-5 h-5 rounded object-contain shrink-0",
+                            isDark ? "bg-white/10" : "bg-slate-100"
+                          )}
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}

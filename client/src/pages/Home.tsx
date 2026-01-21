@@ -1,12 +1,12 @@
 /**
  * Home Page - StonePeak Impact-Feasibility Matrix Dashboard
  * Design: Financial Terminal Precision
- * - Dark theme with institutional seriousness
- * - Data-dense layout with clear hierarchy
- * - Interactive scatter plot matrix as centerpiece
+ * - Supports both light and dark themes
+ * - Fully responsive for mobile, tablet, and desktop
+ * - BlueAllyAI branding in header and footer
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutGrid, 
@@ -14,13 +14,14 @@ import {
   Moon, 
   Sun, 
   Menu,
-  X,
-  Download
+  Filter,
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { IFMMatrix } from '@/components/IFMMatrix';
 import { CompanyDetail } from '@/components/CompanyDetail';
@@ -34,6 +35,8 @@ type ViewMode = 'matrix' | 'list';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+  const isDark = theme === 'dark';
   const { 
     data, 
     loading, 
@@ -47,6 +50,24 @@ export default function Home() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('matrix');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Close sidebar when selecting a company on mobile
+  useEffect(() => {
+    if (selectedCompany && isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [selectedCompany, isMobile]);
 
   // Loading state
   if (loading) {
@@ -82,49 +103,63 @@ export default function Home() {
     );
   }
 
+  const hasActiveFilters = filters.quadrants.length > 0 || filters.categories.length > 0 || filters.tiers.length > 0 || filters.searchQuery.length > 0;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
           {/* Logo & Title */}
-          <div className="flex items-center gap-3">
-            <img 
-              src="/images/stonepeak-logo.png" 
-              alt="StonePeak" 
-              className="h-8 w-8 object-contain"
-            />
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* BlueAllyAI Branding */}
+            <div className="flex items-center gap-0.5">
+              <img 
+                src={isDark ? "/images/blueally-logo-white.png" : "/images/blueally-logo-color.png"}
+                alt="BlueAlly" 
+                className="h-6 sm:h-7 object-contain"
+              />
+              <span className={cn(
+                "text-lg sm:text-xl font-bold tracking-tight",
+                isDark ? "text-white" : "text-[#001B5E]"
+              )}>
+                AI
+              </span>
+            </div>
+            <div className="hidden sm:block h-6 w-px bg-border mx-1" />
             <div className="hidden sm:block">
-              <h1 className="font-mono text-sm font-semibold text-foreground tracking-tight">
+              <h1 className="font-mono text-xs sm:text-sm font-semibold text-foreground tracking-tight">
                 STONEPEAK PARTNERS
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                AI Impact-Feasibility Matrix
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider">
+                Impact-Feasibility Matrix
               </p>
             </div>
           </div>
 
-          {/* Center - Stats (hidden on mobile) */}
+          {/* Center - Stats (hidden on mobile/tablet) */}
           <div className="hidden lg:block">
             <PortfolioStats summary={data.summary} />
           </div>
 
           {/* Right - Actions */}
-          <div className="flex items-center gap-2">
-            {/* View toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* View toggle - visible on tablet+ */}
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="hidden sm:block">
               <TabsList className="h-8">
-                <TabsTrigger value="matrix" className="h-7 px-2">
-                  <LayoutGrid className="h-4 w-4" />
+                <TabsTrigger value="matrix" className="h-7 px-2 text-xs">
+                  <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </TabsTrigger>
-                <TabsTrigger value="list" className="h-7 px-2">
-                  <List className="h-4 w-4" />
+                <TabsTrigger value="list" className="h-7 px-2 text-xs">
+                  <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
-            {/* Methodology */}
-            <MethodologyPanel methodology={data.methodology} />
+            {/* Methodology - hidden on very small screens */}
+            <div className="hidden xs:block">
+              <MethodologyPanel methodology={data.methodology} />
+            </div>
 
             {/* Theme toggle */}
             <Button 
@@ -134,74 +169,154 @@ export default function Home() {
               onClick={() => toggleTheme?.()}
             >
               {theme === 'dark' ? (
-                <Sun className="h-4 w-4" />
+                <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               ) : (
-                <Moon className="h-4 w-4" />
+                <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               )}
             </Button>
 
-            {/* Mobile menu */}
+            {/* Logout button - desktop */}
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-8 w-8 hidden sm:flex"
+              onClick={logout}
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
+
+            {/* Mobile menu / filter button */}
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 lg:hidden">
-                  <Menu className="h-4 w-4" />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className={cn(
+                    "h-8 w-8 lg:hidden relative",
+                    hasActiveFilters && "border-primary"
+                  )}
+                >
+                  <Menu className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {hasActiveFilters && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+                  )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80 p-4">
-                <div className="space-y-6">
+              <SheetContent side="left" className="w-[85vw] max-w-[320px] p-0">
+                <SheetTitle className="sr-only">Menu</SheetTitle>
+                <div className="flex flex-col h-full">
+                  {/* Mobile header */}
+                  <div className="p-4 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-0.5">
+                        <img 
+                          src={isDark ? "/images/blueally-logo-white.png" : "/images/blueally-logo-color.png"}
+                          alt="BlueAlly" 
+                          className="h-5 object-contain"
+                        />
+                        <span className={cn(
+                          "text-base font-bold tracking-tight",
+                          isDark ? "text-white" : "text-[#001B5E]"
+                        )}>
+                          AI
+                        </span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={logout}
+                        className="text-xs h-7"
+                      >
+                        <LogOut className="h-3.5 w-3.5 mr-1" />
+                        Sign out
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      StonePeak Impact-Feasibility Matrix
+                    </p>
+                  </div>
+
                   {/* Mobile stats */}
-                  <div className="lg:hidden">
+                  <div className="p-4 border-b border-border lg:hidden">
                     <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-3">
                       Portfolio Overview
                     </h3>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div className="bg-secondary/50 rounded p-2">
-                        <div className="font-mono font-semibold">{data.summary.totalCompanies}</div>
+                        <div className="font-mono font-semibold text-foreground">{data.summary.totalCompanies}</div>
                         <div className="text-[10px] text-muted-foreground">Companies</div>
                       </div>
                       <div className="bg-secondary/50 rounded p-2">
-                        <div className="font-mono font-semibold">{data.summary.aum}</div>
+                        <div className="font-mono font-semibold text-foreground">{data.summary.aum}</div>
                         <div className="text-[10px] text-muted-foreground">AUM</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Mobile view toggle */}
-                  <div className="sm:hidden">
+                  <div className="p-4 border-b border-border sm:hidden">
                     <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-wide mb-3">
                       View Mode
                     </h3>
                     <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
                       <TabsList className="w-full">
-                        <TabsTrigger value="matrix" className="flex-1 gap-2">
-                          <LayoutGrid className="h-4 w-4" />
+                        <TabsTrigger value="matrix" className="flex-1 gap-2 text-xs">
+                          <LayoutGrid className="h-3.5 w-3.5" />
                           Matrix
                         </TabsTrigger>
-                        <TabsTrigger value="list" className="flex-1 gap-2">
-                          <List className="h-4 w-4" />
+                        <TabsTrigger value="list" className="flex-1 gap-2 text-xs">
+                          <List className="h-3.5 w-3.5" />
                           List
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>
 
+                  {/* Mobile methodology - shown on very small screens */}
+                  <div className="p-4 border-b border-border xs:hidden">
+                    <MethodologyPanel methodology={data.methodology} />
+                  </div>
+
                   {/* Filters */}
-                  <FilterPanel
-                    filters={filters}
-                    onFiltersChange={setFilters}
-                    totalCount={data.companies.length}
-                    filteredCount={filteredCompanies.length}
-                  />
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <FilterPanel
+                      filters={filters}
+                      onFiltersChange={setFilters}
+                      totalCount={data.companies.length}
+                      filteredCount={filteredCompanies.length}
+                    />
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
+          </div>
+        </div>
+
+        {/* Mobile stats bar - visible on tablet, hidden on desktop */}
+        <div className="hidden sm:flex lg:hidden items-center justify-center gap-4 px-4 py-2 border-t border-border bg-secondary/20">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Portfolio:</span>
+            <span className="font-mono font-semibold text-foreground">{data.summary.totalCompanies}</span>
+          </div>
+          <div className="w-px h-4 bg-border" />
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Employees:</span>
+            <span className="font-mono font-semibold text-foreground">
+              {(data.summary.totalEmployees / 1000).toFixed(1)}K
+            </span>
+          </div>
+          <div className="w-px h-4 bg-border" />
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">AUM:</span>
+            <span className="font-mono font-semibold text-foreground">{data.summary.aum}</span>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
-        {/* Sidebar - Filters (desktop) */}
+        {/* Sidebar - Filters (desktop only) */}
         <aside className="hidden lg:block w-64 border-r border-border bg-card/50 p-4 overflow-y-auto">
           <FilterPanel
             filters={filters}
@@ -212,11 +327,11 @@ export default function Home() {
         </aside>
 
         {/* Main area */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Matrix/List view */}
           <div className={cn(
-            "flex-1 p-4 overflow-hidden",
-            selectedCompany ? "hidden md:block" : ""
+            "flex-1 p-2 sm:p-4 overflow-hidden",
+            selectedCompany && isMobile ? "hidden" : ""
           )}>
             <AnimatePresence mode="wait">
               {viewMode === 'matrix' ? (
@@ -252,15 +367,15 @@ export default function Home() {
             </AnimatePresence>
           </div>
 
-          {/* Company detail panel */}
+          {/* Company detail panel - desktop */}
           <AnimatePresence>
-            {selectedCompany && (
+            {selectedCompany && !isMobile && (
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 380, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden shrink-0 md:block"
+                className="overflow-hidden shrink-0 hidden md:block"
               >
                 <CompanyDetail
                   company={selectedCompany}
@@ -272,23 +387,111 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Footer - BlueAllyAI Branding */}
+      <footer className={cn(
+        "border-t border-border py-2 px-4",
+        isMobile && !selectedCompany ? "hidden" : ""
+      )}>
+        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <span>Powered by</span>
+          <div className="flex items-center gap-0.5">
+            <img 
+              src={isDark ? "/images/blueally-logo-white.png" : "/images/blueally-logo-color.png"}
+              alt="BlueAlly" 
+              className="h-4 object-contain"
+            />
+            <span className={cn(
+              "font-bold",
+              isDark ? "text-white" : "text-[#001B5E]"
+            )}>
+              AI
+            </span>
+          </div>
+        </div>
+      </footer>
+
       {/* Mobile company detail - full screen overlay */}
       <AnimatePresence>
-        {selectedCompany && (
+        {selectedCompany && isMobile && (
           <motion.div
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-background md:hidden"
+            className="fixed inset-0 z-50 bg-background md:hidden flex flex-col"
           >
-            <CompanyDetail
-              company={selectedCompany}
-              onClose={() => setSelectedCompany(null)}
-            />
+            <div className="flex-1 overflow-hidden">
+              <CompanyDetail
+                company={selectedCompany}
+                onClose={() => setSelectedCompany(null)}
+              />
+            </div>
+            {/* Mobile detail footer */}
+            <div className="border-t border-border py-2 px-4">
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <span>Powered by</span>
+                <div className="flex items-center gap-0.5">
+                  <img 
+                    src={isDark ? "/images/blueally-logo-white.png" : "/images/blueally-logo-color.png"}
+                    alt="BlueAlly" 
+                    className="h-4 object-contain"
+                  />
+                  <span className={cn(
+                    "font-bold",
+                    isDark ? "text-white" : "text-[#001B5E]"
+                  )}>
+                    AI
+                  </span>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile bottom navigation - quick filter indicator */}
+      {isMobile && !selectedCompany && (
+        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur border-t border-border p-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              <img 
+                src={isDark ? "/images/blueally-logo-white.png" : "/images/blueally-logo-color.png"}
+                alt="BlueAlly" 
+                className="h-3.5 object-contain"
+              />
+              <span className={cn(
+                "text-xs font-bold",
+                isDark ? "text-white" : "text-[#001B5E]"
+              )}>
+                AI
+              </span>
+            </div>
+            <span className="text-[10px] text-muted-foreground">
+              • <span className="font-mono">{filteredCompanies.length}</span> of {data.companies.length}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "h-8 gap-1.5 text-xs",
+              hasActiveFilters && "border-primary text-primary"
+            )}
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filters
+            {hasActiveFilters && (
+              <span className="ml-1 bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px]">
+                {filters.quadrants.length + filters.categories.length + filters.tiers.length}
+              </span>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Add bottom padding on mobile when bottom nav is visible */}
+      {isMobile && !selectedCompany && <div className="h-14" />}
     </div>
   );
 }
