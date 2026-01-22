@@ -44,3 +44,4 @@
 ## UI Changes
 - [x] Remove Effort tab from Use Cases section
 - [x] Remove download button from Use Cases section
+- [x] Remove share button from Use Cases section
