@@ -36,7 +36,7 @@ import { MethodologyPanel } from '@/components/MethodologyPanel';
 import { CompanyList } from '@/components/CompanyList';
 import { ExecutiveDashboard } from '@/components/ExecutiveDashboard';
 import { ExecutiveSummary } from '@/components/ExecutiveSummary';
-import { HelpTips, WelcomeModal } from '@/components/HelpTips';
+import { WelcomeModal } from '@/components/HelpTips';
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'matrix' | 'list' | 'dashboard' | 'summary';
@@ -191,9 +191,6 @@ export default function Home() {
             <div className="hidden xs:block">
               <MethodologyPanel methodology={data.methodology} />
             </div>
-
-            {/* Help Tips */}
-            <HelpTips />
 
             {/* Theme toggle */}
             <Button 
