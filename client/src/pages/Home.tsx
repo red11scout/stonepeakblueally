@@ -4,6 +4,8 @@
  * - Supports both light and dark themes
  * - Fully responsive for mobile, tablet, and desktop
  * - BlueAllyAI branding in header and footer
+ * - Executive Dashboard with charts and summaries
+ * - Helpful tips and user guidance
  */
 
 import { useState, useEffect } from 'react';
@@ -15,7 +17,10 @@ import {
   Sun, 
   Menu,
   Filter,
-  LogOut
+  LogOut,
+  BarChart3,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,9 +34,12 @@ import { FilterPanel } from '@/components/FilterPanel';
 import { PortfolioStats } from '@/components/PortfolioStats';
 import { MethodologyPanel } from '@/components/MethodologyPanel';
 import { CompanyList } from '@/components/CompanyList';
+import { ExecutiveDashboard } from '@/components/ExecutiveDashboard';
+import { ExecutiveSummary } from '@/components/ExecutiveSummary';
+import { HelpTips, WelcomeModal } from '@/components/HelpTips';
 import { cn } from '@/lib/utils';
 
-type ViewMode = 'matrix' | 'list';
+type ViewMode = 'matrix' | 'list' | 'dashboard' | 'summary';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -51,6 +59,16 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>('matrix');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  // Check for first visit
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('stonepeak-ifm-visited');
+    if (!hasVisited) {
+      setShowWelcome(true);
+      localStorage.setItem('stonepeak-ifm-visited', 'true');
+    }
+  }, []);
 
   // Detect mobile viewport
   useEffect(() => {
@@ -107,6 +125,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Welcome Modal for first-time users */}
+      <WelcomeModal isOpen={showWelcome} onClose={() => setShowWelcome(false)} />
+
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
@@ -147,11 +168,21 @@ export default function Home() {
             {/* View toggle - visible on tablet+ */}
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="hidden sm:block">
               <TabsList className="h-8">
-                <TabsTrigger value="matrix" className="h-7 px-2 text-xs">
+                <TabsTrigger value="matrix" className="h-7 px-2 text-xs gap-1" title="Matrix View">
                   <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden md:inline">Matrix</span>
                 </TabsTrigger>
-                <TabsTrigger value="list" className="h-7 px-2 text-xs">
+                <TabsTrigger value="list" className="h-7 px-2 text-xs gap-1" title="List View">
                   <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden md:inline">List</span>
+                </TabsTrigger>
+                <TabsTrigger value="dashboard" className="h-7 px-2 text-xs gap-1" title="Analytics Dashboard">
+                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden md:inline">Analytics</span>
+                </TabsTrigger>
+                <TabsTrigger value="summary" className="h-7 px-2 text-xs gap-1" title="Executive Summary">
+                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden md:inline">Summary</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -161,12 +192,16 @@ export default function Home() {
               <MethodologyPanel methodology={data.methodology} />
             </div>
 
+            {/* Help Tips */}
+            <HelpTips />
+
             {/* Theme toggle */}
             <Button 
               variant="outline" 
               size="icon" 
               className="h-8 w-8"
               onClick={() => toggleTheme?.()}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {theme === 'dark' ? (
                 <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -260,14 +295,22 @@ export default function Home() {
                       View Mode
                     </h3>
                     <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-                      <TabsList className="w-full">
-                        <TabsTrigger value="matrix" className="flex-1 gap-2 text-xs">
+                      <TabsList className="w-full grid grid-cols-4">
+                        <TabsTrigger value="matrix" className="flex-1 gap-1 text-xs">
                           <LayoutGrid className="h-3.5 w-3.5" />
                           Matrix
                         </TabsTrigger>
-                        <TabsTrigger value="list" className="flex-1 gap-2 text-xs">
+                        <TabsTrigger value="list" className="flex-1 gap-1 text-xs">
                           <List className="h-3.5 w-3.5" />
                           List
+                        </TabsTrigger>
+                        <TabsTrigger value="dashboard" className="flex-1 gap-1 text-xs">
+                          <BarChart3 className="h-3.5 w-3.5" />
+                          Stats
+                        </TabsTrigger>
+                        <TabsTrigger value="summary" className="flex-1 gap-1 text-xs">
+                          <FileText className="h-3.5 w-3.5" />
+                          Summary
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -316,24 +359,28 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
-        {/* Sidebar - Filters (desktop only) */}
-        <aside className="hidden lg:block w-64 border-r border-border bg-card/50 p-4 overflow-y-auto">
-          <FilterPanel
-            filters={filters}
-            onFiltersChange={setFilters}
-            totalCount={data.companies.length}
-            filteredCount={filteredCompanies.length}
-          />
-        </aside>
+        {/* Sidebar - Filters (desktop only, not shown in dashboard/summary views) */}
+        {viewMode !== 'dashboard' && viewMode !== 'summary' && (
+          <aside className="hidden lg:block w-64 border-r border-border bg-card/50 p-4 overflow-y-auto">
+            <FilterPanel
+              filters={filters}
+              onFiltersChange={setFilters}
+              totalCount={data.companies.length}
+              filteredCount={filteredCompanies.length}
+            />
+          </aside>
+        )}
 
         {/* Main area */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          {/* Matrix/List view */}
+          {/* Matrix/List/Dashboard/Summary view */}
           <div className={cn(
-            "flex-1 p-2 sm:p-4 overflow-hidden",
-            selectedCompany && isMobile ? "hidden" : ""
+            "flex-1 overflow-hidden",
+            (viewMode === 'matrix' || viewMode === 'list') && "p-2 sm:p-4",
+            (viewMode === 'dashboard' || viewMode === 'summary') && "p-0",
+            selectedCompany && isMobile && (viewMode === 'matrix' || viewMode === 'list') ? "hidden" : ""
           )}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {viewMode === 'matrix' ? (
                 <motion.div
                   key="matrix"
@@ -349,7 +396,7 @@ export default function Home() {
                     threshold={data.methodology.quadrantThreshold}
                   />
                 </motion.div>
-              ) : (
+              ) : viewMode === 'list' ? (
                 <motion.div
                   key="list"
                   initial={{ opacity: 0 }}
@@ -363,13 +410,39 @@ export default function Home() {
                     onSelectCompany={setSelectedCompany}
                   />
                 </motion.div>
-              )}
+              ) : viewMode === 'dashboard' ? (
+                <motion.div
+                  key="dashboard"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="h-full overflow-y-auto"
+                >
+                  <ExecutiveDashboard
+                    companies={data.companies}
+                    onSelectCompany={(company) => {
+                      setSelectedCompany(company);
+                      setViewMode('matrix');
+                    }}
+                  />
+                </motion.div>
+              ) : viewMode === 'summary' ? (
+                <motion.div
+                  key="summary"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="h-full overflow-y-auto"
+                >
+                  <ExecutiveSummary companies={data.companies} />
+                </motion.div>
+              ) : null}
             </AnimatePresence>
           </div>
 
-          {/* Company detail panel - desktop */}
+          {/* Company detail panel - desktop (not shown in dashboard view) */}
           <AnimatePresence>
-            {selectedCompany && !isMobile && (
+            {selectedCompany && !isMobile && (viewMode === 'matrix' || viewMode === 'list') && (
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 380, opacity: 1 }}
@@ -390,7 +463,7 @@ export default function Home() {
       {/* Footer - BlueAllyAI Branding */}
       <footer className={cn(
         "border-t border-border py-2 px-4",
-        isMobile && !selectedCompany ? "hidden" : ""
+        isMobile && !selectedCompany && (viewMode === 'matrix' || viewMode === 'list') ? "hidden" : ""
       )}>
         <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <span>Powered by</span>
@@ -412,7 +485,7 @@ export default function Home() {
 
       {/* Mobile company detail - full screen overlay */}
       <AnimatePresence>
-        {selectedCompany && isMobile && (
+        {selectedCompany && isMobile && viewMode !== 'dashboard' && (
           <motion.div
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
@@ -450,7 +523,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Mobile bottom navigation - quick filter indicator */}
-      {isMobile && !selectedCompany && (
+      {isMobile && !selectedCompany && viewMode !== 'dashboard' && (
         <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur border-t border-border p-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-0.5">
@@ -491,7 +564,7 @@ export default function Home() {
       )}
 
       {/* Add bottom padding on mobile when bottom nav is visible */}
-      {isMobile && !selectedCompany && <div className="h-14" />}
+      {isMobile && !selectedCompany && viewMode !== 'dashboard' && <div className="h-14" />}
     </div>
   );
 }
