@@ -60,6 +60,7 @@ import type {
   PriorityRoadmap 
 } from '@shared/assessmentTypes';
 import { cn } from '@/lib/utils';
+import CrossCompanyAnalytics from '@/components/CrossCompanyAnalytics';
 
 // Section navigation items
 const SECTIONS = [
@@ -109,6 +110,7 @@ export default function UseCases({ onBack }: UseCasesProps) {
   const [activeSection, setActiveSection] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedUseCases, setExpandedUseCases] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'portfolio' | 'analytics'>('portfolio');
 
   // Extract data from selected assessment
   const assessmentData = useMemo(() => {
@@ -188,21 +190,51 @@ export default function UseCases({ onBack }: UseCasesProps) {
             </div>
           </div>
 
-          {/* Company Selector */}
-          <div className="flex items-center gap-2">
-            <Select value={selectedCompany || ''} onValueChange={setSelectedCompany}>
-              <SelectTrigger className="w-[200px] h-9">
-                <SelectValue placeholder="Select company..." />
-              </SelectTrigger>
-              <SelectContent>
-                {assessments.map(a => (
-                  <SelectItem key={a.companyName} value={a.companyName}>
-                    {a.companyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* View Mode Toggle & Company Selector */}
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-secondary/50 rounded-lg p-0.5">
+              <Button
+                variant={viewMode === 'portfolio' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-7 px-3 text-xs"
+                onClick={() => {
+                  setViewMode('portfolio');
+                  setSelectedCompany(null);
+                }}
+              >
+                <Building2 className="h-3.5 w-3.5 mr-1.5" />
+                Portfolio
+              </Button>
+              <Button
+                variant={viewMode === 'analytics' ? 'default' : 'ghost'}
+                size="sm"
+                className="h-7 px-3 text-xs"
+                onClick={() => {
+                  setViewMode('analytics');
+                  setSelectedCompany(null);
+                }}
+              >
+                <Filter className="h-3.5 w-3.5 mr-1.5" />
+                Cross-Company
+              </Button>
+            </div>
 
+            {/* Company Selector - only show in portfolio mode */}
+            {viewMode === 'portfolio' && (
+              <Select value={selectedCompany || ''} onValueChange={setSelectedCompany}>
+                <SelectTrigger className="w-[200px] h-9">
+                  <SelectValue placeholder="Select company..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {assessments.map(a => (
+                    <SelectItem key={a.companyName} value={a.companyName}>
+                      {a.companyName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
@@ -237,7 +269,17 @@ export default function UseCases({ onBack }: UseCasesProps) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
-        {!selectedCompany ? (
+        {viewMode === 'analytics' ? (
+          // Cross-Company Analytics View
+          <CrossCompanyAnalytics
+            assessments={assessments}
+            onSelectCompany={(company) => {
+              setSelectedCompany(company);
+              setViewMode('portfolio');
+            }}
+            isDark={isDark}
+          />
+        ) : !selectedCompany ? (
           // Portfolio Overview when no company selected
           <PortfolioOverview
             assessments={assessments}
