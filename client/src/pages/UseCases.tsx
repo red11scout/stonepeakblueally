@@ -2,7 +2,7 @@
  * Use Cases Page - Comprehensive AI Assessment Analysis
  * Features:
  * - Company selector with 15 Tier 1 companies
- * - 8 sections: Overview, Strategic, KPIs, Friction, Use Cases, Benefits, Effort, Roadmap
+ * - 7 sections: Overview, Strategic, KPIs, Friction, Use Cases, Benefits, Roadmap
  * - Cross-company analytics and pattern detection
  * - Interactive calculations with HyperFormula
  * - Visual storytelling with charts and tables
@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   Lightbulb,
   DollarSign,
-  Gauge,
   Calendar,
   ChevronDown,
   ChevronRight,
@@ -60,7 +59,6 @@ import type {
   FrictionPoint, 
   AIUseCase, 
   BenefitQuantification, 
-  EffortModel, 
   PriorityRoadmap 
 } from '@shared/assessmentTypes';
 import { cn } from '@/lib/utils';
@@ -73,7 +71,6 @@ const SECTIONS = [
   { id: 'friction', label: 'Friction', icon: AlertTriangle },
   { id: 'usecases', label: 'Use Cases', icon: Lightbulb },
   { id: 'benefits', label: 'Benefits', icon: DollarSign },
-  { id: 'effort', label: 'Effort', icon: Gauge },
   { id: 'roadmap', label: 'Roadmap', icon: Calendar },
 ];
 
@@ -126,7 +123,6 @@ export default function UseCases({ onBack }: UseCasesProps) {
       friction: getStepData<FrictionPoint>(selectedAssessment, 'Friction Point Mapping'),
       useCases: getStepData<AIUseCase>(selectedAssessment, 'AI Use Case Generation'),
       benefits: getStepData<BenefitQuantification>(selectedAssessment, 'Benefits Quantification by Driver'),
-      effort: getStepData<EffortModel>(selectedAssessment, 'Effort & Token Model'),
       roadmap: getStepData<PriorityRoadmap>(selectedAssessment, 'Priority Scoring & Roadmap'),
       summary: selectedAssessment.analysis.summary,
       dashboard: selectedAssessment.analysis.executiveDashboard,
@@ -308,13 +304,6 @@ export default function UseCases({ onBack }: UseCasesProps) {
                     key="benefits"
                     data={assessmentData.benefits}
                     dashboard={assessmentData.dashboard}
-                    isDark={isDark}
-                  />
-                )}
-                {activeSection === 'effort' && (
-                  <EffortSection
-                    key="effort"
-                    data={assessmentData.effort}
                     isDark={isDark}
                   />
                 )}
@@ -1034,73 +1023,6 @@ function BenefitsSection({
           </div>
         </CardContent>
       </Card>
-    </motion.div>
-  );
-}
-
-// Effort Section Component
-function EffortSection({ data, isDark }: { data: EffortModel[]; isDark: boolean }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="space-y-6"
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <Gauge className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold">Effort & Token Model</h2>
-      </div>
-
-      <div className="grid gap-4">
-        {data.map(effort => (
-          <Card key={effort.ID}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{effort.ID}</span>
-                    <h3 className="font-semibold">{effort['Use Case']}</h3>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Time to Value: {effort['Time-to-Value (months)']} months
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {effort['Annual Token Cost ($)']}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Data Readiness</div>
-                  <Progress value={effort['Data Readiness (1-5)'] * 20} className="h-2" />
-                  <div className="text-xs mt-1">{effort['Data Readiness (1-5)']}/5</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Integration</div>
-                  <Progress value={effort['Integration Complexity (1-5)'] * 20} className="h-2" />
-                  <div className="text-xs mt-1">{effort['Integration Complexity (1-5)']}/5</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Change Mgmt</div>
-                  <Progress value={effort['Change Mgmt (1-5)'] * 20} className="h-2" />
-                  <div className="text-xs mt-1">{effort['Change Mgmt (1-5)']}/5</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Effort Score</div>
-                  <Progress value={effort['Effort Score (1-5)'] * 20} className="h-2" />
-                  <div className="text-xs mt-1">{effort['Effort Score (1-5)']}/5</div>
-                </div>
-                <div>
-                  <div className="text-xs text-muted-foreground mb-1">Monthly Tokens</div>
-                  <div className="text-sm font-mono">{(effort['Monthly Tokens'] / 1e6).toFixed(1)}M</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </motion.div>
   );
 }

@@ -40,3 +40,6 @@
 
 ## Bug Fixes
 - [ ] Fix company logos from zip file (currently using UI Avatars fallback)
+
+## UI Changes
+- [x] Remove Effort tab from Use Cases section
