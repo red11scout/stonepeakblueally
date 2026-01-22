@@ -27,7 +27,6 @@ import {
   FileText,
   Filter,
   Search,
-  Download,
   Share2,
   ArrowLeft,
 } from 'lucide-react';
@@ -205,9 +204,6 @@ export default function UseCases({ onBack }: UseCasesProps) {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon" className="h-9 w-9" title="Export Report">
-              <Download className="h-4 w-4" />
-            </Button>
             <Button variant="outline" size="icon" className="h-9 w-9" title="Share">
               <Share2 className="h-4 w-4" />
             </Button>
