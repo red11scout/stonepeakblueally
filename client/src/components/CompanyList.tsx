@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { Company, Quadrant } from '@/types/portfolio';
+import type { Company, Quadrant, Category } from '@/types/portfolio';
 import { QUADRANT_CONFIG, CATEGORY_CONFIG } from '@/types/portfolio';
 import { formatRevenue, formatEmployees } from '@/hooks/usePortfolioData';
 import { cn } from '@/lib/utils';
@@ -21,13 +21,30 @@ interface CompanyListProps {
   onSelectCompany: (company: Company) => void;
 }
 
-type SortField = 'name' | 'impactScore' | 'feasibilityScore' | 'priorityScore' | 'employees' | 'revenue';
+type SortField = 'name' | 'quadrant' | 'category' | 'priorityScore' | 'employees' | 'revenue';
 type SortDirection = 'asc' | 'desc';
 
 interface SortConfig {
   field: SortField;
   direction: SortDirection;
 }
+
+// Define sort order for quadrants (Champions first, then Strategic, Quick Wins, Foundation)
+const QUADRANT_ORDER: Record<Quadrant, number> = {
+  'Champions': 1,
+  'Strategic': 2,
+  'Quick Wins': 3,
+  'Foundation': 4
+};
+
+// Define sort order for categories (cohorts)
+const CATEGORY_ORDER: Record<Category, number> = {
+  'Digital Infrastructure': 1,
+  'Energy & Energy Transition': 2,
+  'Transport & Logistics': 3,
+  'Social Infrastructure': 4,
+  'Real Estate': 5
+};
 
 export function CompanyList({ companies, selectedCompany, onSelectCompany }: CompanyListProps) {
   const { theme } = useTheme();
@@ -46,6 +63,14 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
         case 'name':
           aVal = a.name.toLowerCase();
           bVal = b.name.toLowerCase();
+          break;
+        case 'quadrant':
+          aVal = QUADRANT_ORDER[a.quadrant];
+          bVal = QUADRANT_ORDER[b.quadrant];
+          break;
+        case 'category':
+          aVal = CATEGORY_ORDER[a.category];
+          bVal = CATEGORY_ORDER[b.category];
           break;
         case 'revenue':
           aVal = a.revenue || 0;
@@ -78,6 +103,17 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
       : <ArrowUp className="h-3 w-3 text-primary" />;
   };
 
+  // Get display name for sort field
+  const getSortFieldDisplay = (field: SortField): string => {
+    switch (field) {
+      case 'name': return 'name';
+      case 'quadrant': return 'quadrant';
+      case 'category': return 'cohort';
+      case 'priorityScore': return 'priority';
+      default: return field;
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-card rounded-lg border border-border">
       {/* Header */}
@@ -89,16 +125,16 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
           Company <SortIcon field="name" />
         </button>
         <button 
-          className="w-20 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
-          onClick={() => handleSort('impactScore')}
+          className="w-24 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
+          onClick={() => handleSort('quadrant')}
         >
-          Impact <SortIcon field="impactScore" />
+          Quadrant <SortIcon field="quadrant" />
         </button>
         <button 
           className="w-20 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
-          onClick={() => handleSort('feasibilityScore')}
+          onClick={() => handleSort('category')}
         >
-          Feas. <SortIcon field="feasibilityScore" />
+          Cohort <SortIcon field="category" />
         </button>
         <button 
           className="w-20 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
@@ -160,27 +196,34 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span 
-                        className="text-[10px] truncate"
-                        style={{ color: categoryConfig?.color }}
-                      >
-                        {company.category}
+                      <span className="text-[10px] text-muted-foreground">
+                        {company.tier}
                       </span>
                       {company.revenue && company.revenue > 0 && (
                         <span className="text-[10px] text-muted-foreground">
-                          {formatRevenue(company.revenue)}
+                          • {formatRevenue(company.revenue)}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Scores */}
-                  <div className="w-20 text-right font-mono text-sm tabular-nums text-foreground">
-                    {company.impactScore.toFixed(1)}
+                  {/* Quadrant */}
+                  <div 
+                    className="w-24 text-right font-mono text-xs truncate"
+                    style={{ color: quadrantConfig.color }}
+                  >
+                    {company.quadrant}
                   </div>
-                  <div className="w-20 text-right font-mono text-sm tabular-nums text-foreground">
-                    {company.feasibilityScore.toFixed(1)}
+
+                  {/* Cohort (Category) */}
+                  <div 
+                    className="w-20 text-right font-mono text-[10px] truncate"
+                    style={{ color: categoryConfig?.color }}
+                  >
+                    {company.category.split(' ')[0]}
                   </div>
+
+                  {/* Priority Score */}
                   <div 
                     className="w-20 text-right font-mono text-sm tabular-nums font-semibold"
                     style={{ color: quadrantConfig.color }}
@@ -207,7 +250,7 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
       {/* Footer */}
       <div className="px-4 py-2 border-t border-border bg-secondary/30">
         <div className="text-xs font-mono text-muted-foreground">
-          {companies.length} companies • Sorted by {sortConfig.field} ({sortConfig.direction})
+          {companies.length} companies • Sorted by {getSortFieldDisplay(sortConfig.field)} ({sortConfig.direction})
         </div>
       </div>
     </div>
