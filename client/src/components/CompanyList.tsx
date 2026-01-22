@@ -1,17 +1,31 @@
 /**
  * Company List Component
- * Sortable table view of portfolio companies
- * Design: Financial Terminal Precision - data-dense table with monospace numbers
+ * Redesigned table view with filters, logos, rank, and sortable columns
+ * Design: Clean data table with inline filters and tier badges
  */
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
+import { 
+  ArrowUpDown, 
+  ArrowUp, 
+  ArrowDown, 
+  ChevronRight,
+  Search,
+  Filter,
+  ChevronDown
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { Company, Quadrant, Category } from '@/types/portfolio';
 import { QUADRANT_CONFIG, CATEGORY_CONFIG } from '@/types/portfolio';
-import { formatRevenue, formatEmployees } from '@/hooks/usePortfolioData';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -21,7 +35,7 @@ interface CompanyListProps {
   onSelectCompany: (company: Company) => void;
 }
 
-type SortField = 'name' | 'quadrant' | 'category' | 'priorityScore' | 'employees' | 'revenue';
+type SortField = 'rank' | 'name' | 'tier' | 'impactScore' | 'feasibilityScore' | 'priorityScore' | 'category' | 'quadrant';
 type SortDirection = 'asc' | 'desc';
 
 interface SortConfig {
@@ -29,7 +43,7 @@ interface SortConfig {
   direction: SortDirection;
 }
 
-// Define sort order for quadrants (Champions first, then Strategic, Quick Wins, Foundation)
+// Define sort order for quadrants
 const QUADRANT_ORDER: Record<Quadrant, number> = {
   'Champions': 1,
   'Strategic': 2,
@@ -46,23 +60,91 @@ const CATEGORY_ORDER: Record<Category, number> = {
   'Real Estate': 5
 };
 
+// Tier badge colors
+const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  'Tier 1': { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800' },
+  'Tier 2': { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' },
+  'Tier 3': { bg: 'bg-slate-50 dark:bg-slate-800/30', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-700' }
+};
+
+// Short category names for display
+const SHORT_CATEGORY: Record<Category, string> = {
+  'Digital Infrastructure': 'Digital',
+  'Energy & Energy Transition': 'Energy',
+  'Transport & Logistics': 'Transport',
+  'Social Infrastructure': 'Social',
+  'Real Estate': 'Real Estate'
+};
+
 export function CompanyList({ companies, selectedCompany, onSelectCompany }: CompanyListProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: 'priorityScore',
     direction: 'desc'
   });
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [tierFilter, setTierFilter] = useState<string[]>([]);
+  const [quadrantFilter, setQuadrantFilter] = useState<Quadrant[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<Category[]>([]);
 
-  const sortedCompanies = useMemo(() => {
-    return [...companies].sort((a, b) => {
+  // Filter and sort companies
+  const filteredAndSortedCompanies = useMemo(() => {
+    let result = [...companies];
+    
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        c.category.toLowerCase().includes(query) ||
+        c.quadrant.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply tier filter
+    if (tierFilter.length > 0) {
+      result = result.filter(c => tierFilter.includes(c.tier));
+    }
+    
+    // Apply quadrant filter
+    if (quadrantFilter.length > 0) {
+      result = result.filter(c => quadrantFilter.includes(c.quadrant));
+    }
+    
+    // Apply category filter
+    if (categoryFilter.length > 0) {
+      result = result.filter(c => categoryFilter.includes(c.category));
+    }
+    
+    // Sort
+    result.sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
 
       switch (sortConfig.field) {
+        case 'rank':
+        case 'priorityScore':
+          aVal = a.priorityScore;
+          bVal = b.priorityScore;
+          break;
         case 'name':
           aVal = a.name.toLowerCase();
           bVal = b.name.toLowerCase();
+          break;
+        case 'tier':
+          aVal = a.tier;
+          bVal = b.tier;
+          break;
+        case 'impactScore':
+          aVal = a.impactScore;
+          bVal = b.impactScore;
+          break;
+        case 'feasibilityScore':
+          aVal = a.feasibilityScore;
+          bVal = b.feasibilityScore;
           break;
         case 'quadrant':
           aVal = QUADRANT_ORDER[a.quadrant];
@@ -72,20 +154,26 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
           aVal = CATEGORY_ORDER[a.category];
           bVal = CATEGORY_ORDER[b.category];
           break;
-        case 'revenue':
-          aVal = a.revenue || 0;
-          bVal = b.revenue || 0;
-          break;
         default:
-          aVal = a[sortConfig.field] as number;
-          bVal = b[sortConfig.field] as number;
+          aVal = a.priorityScore;
+          bVal = b.priorityScore;
       }
 
       if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [companies, sortConfig]);
+    
+    return result;
+  }, [companies, searchQuery, tierFilter, quadrantFilter, categoryFilter, sortConfig]);
+
+  // Calculate ranks based on priority score
+  const rankedCompanies = useMemo(() => {
+    const sorted = [...companies].sort((a, b) => b.priorityScore - a.priorityScore);
+    const rankMap = new Map<string, number>();
+    sorted.forEach((c, i) => rankMap.set(c.name, i + 1));
+    return rankMap;
+  }, [companies]);
 
   const handleSort = (field: SortField) => {
     setSortConfig(prev => ({
@@ -103,38 +191,185 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
       : <ArrowUp className="h-3 w-3 text-primary" />;
   };
 
-  // Get display name for sort field
-  const getSortFieldDisplay = (field: SortField): string => {
-    switch (field) {
-      case 'name': return 'name';
-      case 'quadrant': return 'quadrant';
-      case 'category': return 'cohort';
-      case 'priorityScore': return 'priority';
-      default: return field;
-    }
-  };
+  const tiers = ['Tier 1', 'Tier 2', 'Tier 3'];
+  const quadrants: Quadrant[] = ['Champions', 'Strategic', 'Quick Wins', 'Foundation'];
+  const categories: Category[] = ['Digital Infrastructure', 'Energy & Energy Transition', 'Transport & Logistics', 'Social Infrastructure', 'Real Estate'];
+
+  const hasActiveFilters = tierFilter.length > 0 || quadrantFilter.length > 0 || categoryFilter.length > 0;
 
   return (
-    <div className="h-full flex flex-col bg-card rounded-lg border border-border">
-      {/* Header */}
-      <div className="flex items-center px-4 py-2 border-b border-border bg-secondary/30 text-xs font-mono text-muted-foreground">
+    <div className="h-full flex flex-col bg-card rounded-lg border border-border overflow-hidden">
+      {/* Search and Filters Bar */}
+      <div className="p-3 md:p-4 border-b border-border space-y-3">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by company, industry, or cohort..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-10 bg-background"
+          />
+        </div>
+        
+        {/* Filter Dropdowns */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground mr-1">Filters:</span>
+          
+          {/* Tier Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={cn(
+                  "h-8 text-xs gap-1",
+                  tierFilter.length > 0 && "border-primary text-primary"
+                )}
+              >
+                {tierFilter.length > 0 ? `${tierFilter.length} Tiers` : 'All Tiers'}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {tiers.map(tier => (
+                <DropdownMenuCheckboxItem
+                  key={tier}
+                  checked={tierFilter.includes(tier)}
+                  onCheckedChange={(checked) => {
+                    setTierFilter(prev => 
+                      checked ? [...prev, tier] : prev.filter(t => t !== tier)
+                    );
+                  }}
+                >
+                  {tier}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* Quadrant Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={cn(
+                  "h-8 text-xs gap-1",
+                  quadrantFilter.length > 0 && "border-primary text-primary"
+                )}
+              >
+                {quadrantFilter.length > 0 ? `${quadrantFilter.length} Quadrants` : 'All Quadrants'}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {quadrants.map(q => (
+                <DropdownMenuCheckboxItem
+                  key={q}
+                  checked={quadrantFilter.includes(q)}
+                  onCheckedChange={(checked) => {
+                    setQuadrantFilter(prev => 
+                      checked ? [...prev, q] : prev.filter(x => x !== q)
+                    );
+                  }}
+                >
+                  <span 
+                    className="w-2 h-2 rounded-full mr-2"
+                    style={{ backgroundColor: QUADRANT_CONFIG[q].color }}
+                  />
+                  {q}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* Industry/Cohort Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={cn(
+                  "h-8 text-xs gap-1",
+                  categoryFilter.length > 0 && "border-primary text-primary"
+                )}
+              >
+                {categoryFilter.length > 0 ? `${categoryFilter.length} Industries` : 'All Industries'}
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {categories.map(cat => (
+                <DropdownMenuCheckboxItem
+                  key={cat}
+                  checked={categoryFilter.includes(cat)}
+                  onCheckedChange={(checked) => {
+                    setCategoryFilter(prev => 
+                      checked ? [...prev, cat] : prev.filter(c => c !== cat)
+                    );
+                  }}
+                >
+                  <span 
+                    className="w-2 h-2 rounded-full mr-2"
+                    style={{ backgroundColor: CATEGORY_CONFIG[cat]?.color }}
+                  />
+                  {cat}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setTierFilter([]);
+                setQuadrantFilter([]);
+                setCategoryFilter([]);
+              }}
+            >
+              Clear all
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Table Header */}
+      <div className="hidden md:flex items-center px-4 py-2.5 border-b border-border bg-secondary/30 text-xs font-medium text-muted-foreground">
         <button 
-          className="flex-1 flex items-center gap-1 hover:text-foreground transition-colors text-left"
+          className="w-16 flex items-center gap-1 hover:text-foreground transition-colors"
+          onClick={() => handleSort('rank')}
+        >
+          Rank <SortIcon field="rank" />
+        </button>
+        <button 
+          className="flex-1 flex items-center gap-1 hover:text-foreground transition-colors"
           onClick={() => handleSort('name')}
         >
           Company <SortIcon field="name" />
         </button>
         <button 
-          className="w-24 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
-          onClick={() => handleSort('quadrant')}
+          className="w-20 flex items-center justify-center gap-1 hover:text-foreground transition-colors"
+          onClick={() => handleSort('tier')}
         >
-          Quadrant <SortIcon field="quadrant" />
+          Tier <SortIcon field="tier" />
         </button>
         <button 
           className="w-20 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
-          onClick={() => handleSort('category')}
+          onClick={() => handleSort('impactScore')}
         >
-          Cohort <SortIcon field="category" />
+          Impact <SortIcon field="impactScore" />
+        </button>
+        <button 
+          className="w-24 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
+          onClick={() => handleSort('feasibilityScore')}
+        >
+          Feasibility <SortIcon field="feasibilityScore" />
         </button>
         <button 
           className="w-20 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
@@ -142,16 +377,40 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
         >
           Priority <SortIcon field="priorityScore" />
         </button>
-        <div className="w-8" />
+        <button 
+          className="w-28 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
+          onClick={() => handleSort('category')}
+        >
+          Industry <SortIcon field="category" />
+        </button>
+        <button 
+          className="w-24 flex items-center justify-end gap-1 hover:text-foreground transition-colors"
+          onClick={() => handleSort('quadrant')}
+        >
+          Quadrant <SortIcon field="quadrant" />
+        </button>
+        <div className="w-16 text-right">Actions</div>
       </div>
 
-      {/* List */}
+      {/* Mobile Header */}
+      <div className="md:hidden flex items-center justify-between px-3 py-2 border-b border-border bg-secondary/30 text-xs text-muted-foreground">
+        <span>{filteredAndSortedCompanies.length} companies</span>
+        <button 
+          className="flex items-center gap-1"
+          onClick={() => handleSort('priorityScore')}
+        >
+          Sort by Priority <SortIcon field="priorityScore" />
+        </button>
+      </div>
+
+      {/* Company List */}
       <ScrollArea className="flex-1">
         <AnimatePresence mode="popLayout">
-          {sortedCompanies.map((company, index) => {
+          {filteredAndSortedCompanies.map((company, index) => {
             const isSelected = selectedCompany?.name === company.name;
             const quadrantConfig = QUADRANT_CONFIG[company.quadrant];
-            const categoryConfig = CATEGORY_CONFIG[company.category];
+            const tierColors = TIER_COLORS[company.tier] || TIER_COLORS['Tier 3'];
+            const rank = rankedCompanies.get(company.name) || index + 1;
 
             return (
               <motion.div
@@ -160,97 +419,199 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                transition={{ delay: index * 0.01, duration: 0.15 }}
+                transition={{ delay: Math.min(index * 0.01, 0.3), duration: 0.15 }}
               >
+                {/* Desktop Row */}
                 <button
                   className={cn(
-                    "w-full flex items-center px-4 py-2.5 text-left transition-colors border-b border-border/50",
+                    "hidden md:flex w-full items-center px-4 py-3 text-left transition-colors border-b border-border/50",
                     isSelected 
-                      ? "bg-primary/10 border-l-2 border-l-primary" 
+                      ? "bg-primary/5 border-l-2 border-l-primary" 
                       : "hover:bg-secondary/50"
                   )}
                   onClick={() => onSelectCompany(company)}
                 >
-                  {/* Company info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: quadrantConfig.color }}
-                      />
-                      {company.logoUrl && (
+                  {/* Rank */}
+                  <div className="w-16 font-mono text-sm text-muted-foreground">
+                    #{rank}
+                  </div>
+                  
+                  {/* Company with Logo */}
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden",
+                      isDark ? "bg-white/10" : "bg-slate-100"
+                    )}>
+                      {company.logoUrl ? (
                         <img 
                           src={`${company.logoUrl}?size=64`}
                           alt={company.name}
-                          className={cn(
-                            "w-5 h-5 rounded object-contain shrink-0",
-                            isDark ? "bg-white/10" : "bg-slate-100"
-                          )}
+                          className="w-6 h-6 object-contain"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-xs font-bold text-muted-foreground">${company.name.charAt(0)}</span>`;
                           }}
                         />
-                      )}
-                      <span className="font-mono text-sm text-foreground truncate">
-                        {company.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-muted-foreground">
-                        {company.tier}
-                      </span>
-                      {company.revenue && company.revenue > 0 && (
-                        <span className="text-[10px] text-muted-foreground">
-                          • {formatRevenue(company.revenue)}
+                      ) : (
+                        <span className="text-xs font-bold text-muted-foreground">
+                          {company.name.charAt(0)}
                         </span>
                       )}
                     </div>
+                    <span className="font-medium text-sm text-foreground truncate">
+                      {company.name}
+                    </span>
                   </div>
-
+                  
+                  {/* Tier Badge */}
+                  <div className="w-20 flex justify-center">
+                    <span className={cn(
+                      "px-2 py-0.5 rounded text-[10px] font-medium border",
+                      tierColors.bg,
+                      tierColors.text,
+                      tierColors.border
+                    )}>
+                      {company.tier}
+                    </span>
+                  </div>
+                  
+                  {/* Impact Score */}
+                  <div className="w-20 text-right font-mono text-sm tabular-nums">
+                    {company.impactScore.toFixed(1)}
+                  </div>
+                  
+                  {/* Feasibility Score */}
+                  <div className="w-24 text-right font-mono text-sm tabular-nums">
+                    {company.feasibilityScore.toFixed(1)}
+                  </div>
+                  
+                  {/* Priority Score */}
+                  <div className="w-20 text-right font-mono text-sm tabular-nums font-bold">
+                    {company.priorityScore.toFixed(1)}
+                  </div>
+                  
+                  {/* Industry */}
+                  <div className="w-28 text-right text-xs text-muted-foreground truncate">
+                    {SHORT_CATEGORY[company.category]}
+                  </div>
+                  
                   {/* Quadrant */}
                   <div 
-                    className="w-24 text-right font-mono text-xs truncate"
+                    className="w-24 text-right text-xs font-medium truncate"
                     style={{ color: quadrantConfig.color }}
                   >
                     {company.quadrant}
                   </div>
-
-                  {/* Cohort (Category) */}
-                  <div 
-                    className="w-20 text-right font-mono text-[10px] truncate"
-                    style={{ color: categoryConfig?.color }}
-                  >
-                    {company.category.split(' ')[0]}
+                  
+                  {/* Actions */}
+                  <div className="w-16 flex justify-end">
+                    <span className="text-xs text-primary hover:underline">
+                      View
+                    </span>
                   </div>
+                </button>
 
+                {/* Mobile Row */}
+                <button
+                  className={cn(
+                    "md:hidden w-full flex items-center px-3 py-3 text-left transition-colors border-b border-border/50",
+                    isSelected 
+                      ? "bg-primary/5 border-l-2 border-l-primary" 
+                      : "hover:bg-secondary/50"
+                  )}
+                  onClick={() => onSelectCompany(company)}
+                >
+                  {/* Rank */}
+                  <div className="w-10 font-mono text-xs text-muted-foreground">
+                    #{rank}
+                  </div>
+                  
+                  {/* Logo */}
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden mr-2",
+                    isDark ? "bg-white/10" : "bg-slate-100"
+                  )}>
+                    {company.logoUrl ? (
+                      <img 
+                        src={`${company.logoUrl}?size=64`}
+                        alt={company.name}
+                        className="w-5 h-5 object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {company.name.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Company Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm text-foreground truncate">
+                      {company.name}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={cn(
+                        "px-1.5 py-0.5 rounded text-[9px] font-medium border",
+                        tierColors.bg,
+                        tierColors.text,
+                        tierColors.border
+                      )}>
+                        {company.tier}
+                      </span>
+                      <span 
+                        className="text-[10px]"
+                        style={{ color: quadrantConfig.color }}
+                      >
+                        {company.quadrant}
+                      </span>
+                    </div>
+                  </div>
+                  
                   {/* Priority Score */}
-                  <div 
-                    className="w-20 text-right font-mono text-sm tabular-nums font-semibold"
-                    style={{ color: quadrantConfig.color }}
-                  >
-                    {company.priorityScore.toFixed(1)}
+                  <div className="text-right">
+                    <div className="font-mono text-sm font-bold tabular-nums">
+                      {company.priorityScore.toFixed(1)}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Priority
+                    </div>
                   </div>
-
-                  {/* Arrow */}
-                  <div className="w-8 flex justify-end">
-                    <ChevronRight 
-                      className={cn(
-                        "h-4 w-4 transition-transform",
-                        isSelected ? "text-primary rotate-90" : "text-muted-foreground"
-                      )}
-                    />
-                  </div>
+                  
+                  <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
                 </button>
               </motion.div>
             );
           })}
         </AnimatePresence>
+        
+        {filteredAndSortedCompanies.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Search className="h-8 w-8 mb-2 opacity-50" />
+            <p className="text-sm">No companies match your filters</p>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => {
+                setSearchQuery('');
+                setTierFilter([]);
+                setQuadrantFilter([]);
+                setCategoryFilter([]);
+              }}
+            >
+              Clear all filters
+            </Button>
+          </div>
+        )}
       </ScrollArea>
 
       {/* Footer */}
       <div className="px-4 py-2 border-t border-border bg-secondary/30">
-        <div className="text-xs font-mono text-muted-foreground">
-          {companies.length} companies • Sorted by {getSortFieldDisplay(sortConfig.field)} ({sortConfig.direction})
+        <div className="text-xs text-muted-foreground">
+          Showing {filteredAndSortedCompanies.length} of {companies.length} companies
         </div>
       </div>
     </div>

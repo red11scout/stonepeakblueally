@@ -176,9 +176,9 @@ export default function Home() {
                   <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden md:inline">Matrix</span>
                 </TabsTrigger>
-                <TabsTrigger value="list" className="h-7 px-2 text-xs gap-1" title="List View">
+                <TabsTrigger value="list" className="h-7 px-2 text-xs gap-1" title="Companies">
                   <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden md:inline">List</span>
+                  <span className="hidden md:inline">Companies</span>
                 </TabsTrigger>
                 <TabsTrigger value="summary" className="h-7 px-2 text-xs gap-1" title="Executive Summary">
                   <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -299,7 +299,7 @@ export default function Home() {
                         </TabsTrigger>
                         <TabsTrigger value="list" className="flex-1 gap-1 text-xs">
                           <List className="h-3.5 w-3.5" />
-                          List
+                          Companies
                         </TabsTrigger>
                         <TabsTrigger value="dashboard" className="flex-1 gap-1 text-xs">
                           <BarChart3 className="h-3.5 w-3.5" />
