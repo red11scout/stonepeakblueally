@@ -37,13 +37,15 @@ import { CompanyList } from '@/components/CompanyList';
 import { ExecutiveDashboard } from '@/components/ExecutiveDashboard';
 import { ExecutiveSummary } from '@/components/ExecutiveSummary';
 import { WelcomeModal } from '@/components/HelpTips';
+import UseCases from '@/pages/UseCases';
 import { cn } from '@/lib/utils';
+import { Lightbulb } from 'lucide-react';
 
-type ViewMode = 'matrix' | 'list' | 'dashboard' | 'summary';
+type ViewMode = 'matrix' | 'list' | 'dashboard' | 'summary' | 'usecases';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const isDark = theme === 'dark';
   const { 
     data, 
@@ -184,6 +186,10 @@ export default function Home() {
                   <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden md:inline">Summary</span>
                 </TabsTrigger>
+                <TabsTrigger value="usecases" className="h-7 px-2 text-xs gap-1" title="AI Use Cases">
+                  <Lightbulb className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden md:inline">Use Cases</span>
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -292,22 +298,26 @@ export default function Home() {
                       View Mode
                     </h3>
                     <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-                      <TabsList className="w-full grid grid-cols-4">
+                      <TabsList className="w-full grid grid-cols-5">
+                        <TabsTrigger value="dashboard" className="flex-1 gap-1 text-xs">
+                          <BarChart3 className="h-3.5 w-3.5" />
+                          Stats
+                        </TabsTrigger>
                         <TabsTrigger value="matrix" className="flex-1 gap-1 text-xs">
                           <LayoutGrid className="h-3.5 w-3.5" />
                           Matrix
                         </TabsTrigger>
                         <TabsTrigger value="list" className="flex-1 gap-1 text-xs">
                           <List className="h-3.5 w-3.5" />
-                          Companies
-                        </TabsTrigger>
-                        <TabsTrigger value="dashboard" className="flex-1 gap-1 text-xs">
-                          <BarChart3 className="h-3.5 w-3.5" />
-                          Stats
+                          List
                         </TabsTrigger>
                         <TabsTrigger value="summary" className="flex-1 gap-1 text-xs">
                           <FileText className="h-3.5 w-3.5" />
                           Summary
+                        </TabsTrigger>
+                        <TabsTrigger value="usecases" className="flex-1 gap-1 text-xs">
+                          <Lightbulb className="h-3.5 w-3.5" />
+                          AI
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -356,8 +366,8 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
-        {/* Sidebar - Filters (desktop only, not shown in dashboard/summary views) */}
-        {viewMode !== 'dashboard' && viewMode !== 'summary' && (
+        {/* Sidebar - Filters (desktop only, not shown in dashboard/summary/usecases views) */}
+        {viewMode !== 'dashboard' && viewMode !== 'summary' && viewMode !== 'usecases' && (
           <aside className="hidden lg:block w-64 border-r border-border bg-card/50 p-4 overflow-y-auto">
             <FilterPanel
               filters={filters}
@@ -374,7 +384,7 @@ export default function Home() {
           <div className={cn(
             "flex-1 overflow-hidden",
             (viewMode === 'matrix' || viewMode === 'list') && "p-2 sm:p-4",
-            (viewMode === 'dashboard' || viewMode === 'summary') && "p-0",
+            (viewMode === 'dashboard' || viewMode === 'summary' || viewMode === 'usecases') && "p-0",
             selectedCompany && isMobile && (viewMode === 'matrix' || viewMode === 'list') ? "hidden" : ""
           )}>
             <AnimatePresence>
@@ -432,6 +442,16 @@ export default function Home() {
                   className="h-full overflow-y-auto"
                 >
                   <ExecutiveSummary companies={data.companies} />
+                </motion.div>
+              ) : viewMode === 'usecases' ? (
+                <motion.div
+                  key="usecases"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="h-full overflow-y-auto"
+                >
+                  <UseCases onBack={() => setViewMode('dashboard')} />
                 </motion.div>
               ) : null}
             </AnimatePresence>
