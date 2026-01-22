@@ -6,7 +6,28 @@
 
 import { useRef, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Company, Quadrant } from '@/types/portfolio';
+import type { Company, Quadrant, Category } from '@/types/portfolio';
+
+// Category colors for avatar backgrounds
+const CATEGORY_AVATAR_COLORS: Record<Category, string> = {
+  'Digital Infrastructure': '3B82F6',
+  'Energy & Energy Transition': '10B981',
+  'Transport & Logistics': 'F59E0B',
+  'Social Infrastructure': '8B5CF6',
+  'Real Estate': 'EC4899'
+};
+
+// Generate avatar URL using UI Avatars API
+function getAvatarUrl(name: string, category: Category): string {
+  const initials = name
+    .split(/[\s\-\(\)]+/)
+    .filter(word => word.length > 0)
+    .slice(0, 2)
+    .map(word => word.charAt(0).toUpperCase())
+    .join('');
+  const bgColor = CATEGORY_AVATAR_COLORS[category] || '6B7280';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${bgColor}&color=fff&size=64&bold=true&format=png`;
+}
 import { QUADRANT_CONFIG, CATEGORY_CONFIG } from '@/types/portfolio';
 import { formatRevenue, formatEmployees } from '@/hooks/usePortfolioData';
 import { cn } from '@/lib/utils';
@@ -314,19 +335,14 @@ export function IFMMatrix({
             >
               <div className="bg-card border border-border rounded-md p-3 shadow-xl min-w-[200px]">
                 <div className="flex items-center gap-2">
-                  {hoveredCompany.logoUrl && (
-                    <img 
-                      src={`${hoveredCompany.logoUrl}?size=64`}
-                      alt={hoveredCompany.name}
-                      className={cn(
-                        "w-6 h-6 rounded object-contain",
-                        isDark ? "bg-white/10" : "bg-slate-100"
-                      )}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  )}
+                  <img 
+                    src={getAvatarUrl(hoveredCompany.name, hoveredCompany.category)}
+                    alt={hoveredCompany.name}
+                    className={cn(
+                      "w-6 h-6 rounded object-contain",
+                      isDark ? "bg-white/10" : "bg-slate-100"
+                    )}
+                  />
                   <div className="font-mono text-sm font-semibold text-foreground">
                     {hoveredCompany.name}
                   </div>

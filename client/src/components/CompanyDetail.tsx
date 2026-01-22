@@ -9,7 +9,28 @@ import { X, MapPin, Calendar, Users, DollarSign, TrendingUp, Target, Shield, Zap
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import type { Company } from '@/types/portfolio';
+import type { Company, Category } from '@/types/portfolio';
+
+// Category colors for avatar backgrounds
+const CATEGORY_AVATAR_COLORS: Record<Category, string> = {
+  'Digital Infrastructure': '3B82F6',
+  'Energy & Energy Transition': '10B981',
+  'Transport & Logistics': 'F59E0B',
+  'Social Infrastructure': '8B5CF6',
+  'Real Estate': 'EC4899'
+};
+
+// Generate avatar URL using UI Avatars API
+function getAvatarUrl(name: string, category: Category): string {
+  const initials = name
+    .split(/[\s\-\(\)]+/)
+    .filter(word => word.length > 0)
+    .slice(0, 2)
+    .map(word => word.charAt(0).toUpperCase())
+    .join('');
+  const bgColor = CATEGORY_AVATAR_COLORS[category] || '6B7280';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${bgColor}&color=fff&size=128&bold=true&format=png`;
+}
 import { QUADRANT_CONFIG, CATEGORY_CONFIG, TIER_CONFIG } from '@/types/portfolio';
 import { formatRevenue, formatEmployees } from '@/hooks/usePortfolioData';
 import { cn } from '@/lib/utils';
@@ -64,19 +85,14 @@ export function CompanyDetail({ company, onClose }: CompanyDetailProps) {
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3">
-              {company.logoUrl && (
-                <img 
-                  src={`${company.logoUrl}?size=128`}
-                  alt={company.name}
-                  className={cn(
-                    "w-10 h-10 rounded-lg object-contain p-1 shrink-0",
-                    isDark ? "bg-white/10" : "bg-slate-100"
-                  )}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              )}
+              <img 
+                src={getAvatarUrl(company.name, company.category)}
+                alt={company.name}
+                className={cn(
+                  "w-10 h-10 rounded-lg object-contain shrink-0",
+                  isDark ? "bg-white/10" : "bg-slate-100"
+                )}
+              />
               <h2 className="font-mono text-lg font-semibold text-foreground truncate">
                 {company.name}
               </h2>

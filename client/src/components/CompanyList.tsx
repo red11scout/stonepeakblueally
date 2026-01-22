@@ -76,6 +76,51 @@ const SHORT_CATEGORY: Record<Category, string> = {
   'Real Estate': 'Real Estate'
 };
 
+// Category colors for avatar backgrounds
+const CATEGORY_AVATAR_COLORS: Record<Category, string> = {
+  'Digital Infrastructure': '3B82F6',
+  'Energy & Energy Transition': '10B981',
+  'Transport & Logistics': 'F59E0B',
+  'Social Infrastructure': '8B5CF6',
+  'Real Estate': 'EC4899'
+};
+
+// Generate avatar URL using UI Avatars API
+function getAvatarUrl(name: string, category: Category): string {
+  const initials = name
+    .split(/[\s\-\(\)]+/)
+    .filter(word => word.length > 0)
+    .slice(0, 2)
+    .map(word => word.charAt(0).toUpperCase())
+    .join('');
+  const bgColor = CATEGORY_AVATAR_COLORS[category] || '6B7280';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=${bgColor}&color=fff&size=64&bold=true&format=png`;
+}
+
+// Company Logo component with fallback
+function CompanyLogo({ company, size = 'sm', isDark }: { company: Company; size?: 'sm' | 'md'; isDark: boolean }) {
+  const [hasError, setHasError] = useState(false);
+  const sizeClasses = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
+  const imgSizeClasses = size === 'sm' ? 'w-6 h-6' : 'w-8 h-8';
+  
+  const avatarUrl = getAvatarUrl(company.name, company.category);
+  
+  return (
+    <div className={cn(
+      sizeClasses,
+      "rounded-lg flex items-center justify-center shrink-0 overflow-hidden",
+      isDark ? "bg-white/10" : "bg-slate-100"
+    )}>
+      <img 
+        src={hasError ? avatarUrl : avatarUrl}
+        alt={company.name}
+        className={cn(imgSizeClasses, "object-contain rounded")}
+        onError={() => setHasError(true)}
+      />
+    </div>
+  );
+}
+
 export function CompanyList({ companies, selectedCompany, onSelectCompany }: CompanyListProps) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -296,7 +341,7 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                   categoryFilter.length > 0 && "border-primary text-primary"
                 )}
               >
-                {categoryFilter.length > 0 ? `${categoryFilter.length} Industries` : 'All Industries'}
+                {categoryFilter.length > 0 ? `${categoryFilter.length} Cohorts` : 'All Cohorts'}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -313,9 +358,9 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                 >
                   <span 
                     className="w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: CATEGORY_CONFIG[cat]?.color }}
+                    style={{ backgroundColor: CATEGORY_CONFIG[cat].color }}
                   />
-                  {cat}
+                  {SHORT_CATEGORY[cat]}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -339,8 +384,8 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
         </div>
       </div>
 
-      {/* Table Header */}
-      <div className="hidden md:flex items-center px-4 py-2.5 border-b border-border bg-secondary/30 text-xs font-medium text-muted-foreground">
+      {/* Table Header - Desktop */}
+      <div className="hidden md:flex items-center px-4 py-2 bg-secondary/30 border-b border-border text-xs font-medium text-muted-foreground">
         <button 
           className="w-16 flex items-center gap-1 hover:text-foreground transition-colors"
           onClick={() => handleSort('rank')}
@@ -389,18 +434,44 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
         >
           Quadrant <SortIcon field="quadrant" />
         </button>
-        <div className="w-16 text-right">Actions</div>
+        <div className="w-8" />
       </div>
 
-      {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between px-3 py-2 border-b border-border bg-secondary/30 text-xs text-muted-foreground">
-        <span>{filteredAndSortedCompanies.length} companies</span>
+      {/* Mobile Sort Options */}
+      <div className="md:hidden flex items-center gap-2 px-3 py-2 bg-secondary/30 border-b border-border overflow-x-auto">
+        <span className="text-xs text-muted-foreground shrink-0">Sort:</span>
         <button 
-          className="flex items-center gap-1"
+          className={cn(
+            "text-xs px-2 py-1 rounded-full shrink-0 flex items-center gap-1",
+            sortConfig.field === 'priorityScore' ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+          )}
           onClick={() => handleSort('priorityScore')}
         >
-          Sort by Priority <SortIcon field="priorityScore" />
+          Priority <SortIcon field="priorityScore" />
         </button>
+        <button 
+          className={cn(
+            "text-xs px-2 py-1 rounded-full shrink-0 flex items-center gap-1",
+            sortConfig.field === 'name' ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+          )}
+          onClick={() => handleSort('name')}
+        >
+          Name <SortIcon field="name" />
+        </button>
+        <button 
+          className={cn(
+            "text-xs px-2 py-1 rounded-full shrink-0 flex items-center gap-1",
+            sortConfig.field === 'quadrant' ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+          )}
+          onClick={() => handleSort('quadrant')}
+        >
+          Quadrant <SortIcon field="quadrant" />
+        </button>
+      </div>
+
+      {/* Results Count */}
+      <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border/50">
+        Showing {filteredAndSortedCompanies.length} of {companies.length} companies
       </div>
 
       {/* Company List */}
@@ -438,26 +509,7 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                   
                   {/* Company with Logo */}
                   <div className="flex-1 flex items-center gap-3 min-w-0">
-                    <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden",
-                      isDark ? "bg-white/10" : "bg-slate-100"
-                    )}>
-                      {company.logoUrl ? (
-                        <img 
-                          src={`${company.logoUrl}?size=64`}
-                          alt={company.name}
-                          className="w-6 h-6 object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-xs font-bold text-muted-foreground">${company.name.charAt(0)}</span>`;
-                          }}
-                        />
-                      ) : (
-                        <span className="text-xs font-bold text-muted-foreground">
-                          {company.name.charAt(0)}
-                        </span>
-                      )}
-                    </div>
+                    <CompanyLogo company={company} size="sm" isDark={isDark} />
                     <span className="font-medium text-sm text-foreground truncate">
                       {company.name}
                     </span>
@@ -503,119 +555,76 @@ export function CompanyList({ companies, selectedCompany, onSelectCompany }: Com
                     {company.quadrant}
                   </div>
                   
-                  {/* Actions */}
-                  <div className="w-16 flex justify-end">
-                    <span className="text-xs text-primary hover:underline">
-                      View
-                    </span>
+                  {/* Arrow */}
+                  <div className="w-8 flex justify-end">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </button>
 
                 {/* Mobile Row */}
                 <button
                   className={cn(
-                    "md:hidden w-full flex items-center px-3 py-3 text-left transition-colors border-b border-border/50",
+                    "md:hidden w-full p-3 text-left transition-colors border-b border-border/50",
                     isSelected 
                       ? "bg-primary/5 border-l-2 border-l-primary" 
                       : "hover:bg-secondary/50"
                   )}
                   onClick={() => onSelectCompany(company)}
                 >
-                  {/* Rank */}
-                  <div className="w-10 font-mono text-xs text-muted-foreground">
-                    #{rank}
-                  </div>
-                  
-                  {/* Logo */}
-                  <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden mr-2",
-                    isDark ? "bg-white/10" : "bg-slate-100"
-                  )}>
-                    {company.logoUrl ? (
-                      <img 
-                        src={`${company.logoUrl}?size=64`}
-                        alt={company.name}
-                        className="w-5 h-5 object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <span className="text-xs font-bold text-muted-foreground">
-                        {company.name.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Company Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-foreground truncate">
-                      {company.name}
+                  <div className="flex items-center gap-3">
+                    {/* Rank */}
+                    <div className="font-mono text-xs text-muted-foreground w-8">
+                      #{rank}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={cn(
-                        "px-1.5 py-0.5 rounded text-[9px] font-medium border",
-                        tierColors.bg,
-                        tierColors.text,
-                        tierColors.border
-                      )}>
-                        {company.tier}
-                      </span>
-                      <span 
-                        className="text-[10px]"
-                        style={{ color: quadrantConfig.color }}
-                      >
-                        {company.quadrant}
-                      </span>
+                    
+                    {/* Logo */}
+                    <CompanyLogo company={company} size="sm" isDark={isDark} />
+                    
+                    {/* Company Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm text-foreground truncate">
+                          {company.name}
+                        </span>
+                        <span className={cn(
+                          "px-1.5 py-0.5 rounded text-[9px] font-medium border shrink-0",
+                          tierColors.bg,
+                          tierColors.text,
+                          tierColors.border
+                        )}>
+                          {company.tier}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span 
+                          className="text-[10px] font-medium"
+                          style={{ color: quadrantConfig.color }}
+                        >
+                          {company.quadrant}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">•</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {SHORT_CATEGORY[company.category]}
+                        </span>
+                      </div>
                     </div>
+                    
+                    {/* Priority Score */}
+                    <div className="text-right shrink-0">
+                      <div className="font-mono text-sm font-bold tabular-nums">
+                        {company.priorityScore.toFixed(1)}
+                      </div>
+                      <div className="text-[9px] text-muted-foreground">Priority</div>
+                    </div>
+                    
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </div>
-                  
-                  {/* Priority Score */}
-                  <div className="text-right">
-                    <div className="font-mono text-sm font-bold tabular-nums">
-                      {company.priorityScore.toFixed(1)}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      Priority
-                    </div>
-                  </div>
-                  
-                  <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
                 </button>
               </motion.div>
             );
           })}
         </AnimatePresence>
-        
-        {filteredAndSortedCompanies.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Search className="h-8 w-8 mb-2 opacity-50" />
-            <p className="text-sm">No companies match your filters</p>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="mt-2"
-              onClick={() => {
-                setSearchQuery('');
-                setTierFilter([]);
-                setQuadrantFilter([]);
-                setCategoryFilter([]);
-              }}
-            >
-              Clear all filters
-            </Button>
-          </div>
-        )}
       </ScrollArea>
-
-      {/* Footer */}
-      <div className="px-4 py-2 border-t border-border bg-secondary/30">
-        <div className="text-xs text-muted-foreground">
-          Showing {filteredAndSortedCompanies.length} of {companies.length} companies
-        </div>
-      </div>
     </div>
   );
 }
-
-export default CompanyList;
