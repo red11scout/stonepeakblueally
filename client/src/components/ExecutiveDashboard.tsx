@@ -291,49 +291,54 @@ export function ExecutiveDashboard({ companies, onSelectCompany }: ExecutiveDash
                 </div>
               </div>
 
-              {/* Quadrant Definitions */}
+              {/* Quadrant Definitions - 2x2 grid matching matrix layout */}
               <div>
                 <h4 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Layers className="h-4 w-4 text-primary" />
                   Quadrant Definitions
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {Object.entries(QUADRANT_CONFIG).map(([key, config]) => (
-                    <div 
-                      key={key}
-                      className="p-3 rounded-lg border transition-all"
-                      style={{ 
-                        backgroundColor: isDark ? config.bgColor : config.bgColor,
-                        borderColor: config.color + '40'
-                      }}
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div 
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: config.color }}
-                        />
-                        <span 
-                          className="font-mono font-semibold text-xs"
-                          style={{ color: config.color }}
-                        >
-                          {config.label}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        {config.description}
-                      </p>
-                      <div className="mt-2 pt-2 border-t border-border/50">
-                        <p className="text-[9px] text-muted-foreground">
-                          <strong className="text-foreground">Strategy:</strong> {
-                            key === 'Champions' ? 'Full AI transformation' :
-                            key === 'Strategic' ? 'Targeted high-impact pilots' :
-                            key === 'Quick Wins' ? 'Rapid efficiency gains' :
-                            'Build foundational capabilities'
-                          }
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Row 1: Strategic (top-left in matrix), Champions (top-right in matrix) */}
+                  {/* Row 2: Foundation (bottom-left in matrix), Quick Wins (bottom-right in matrix) */}
+                  {(['Strategic', 'Champions', 'Foundation', 'Quick Wins'] as const).map((key) => {
+                    const config = QUADRANT_CONFIG[key];
+                    return (
+                      <div 
+                        key={key}
+                        className="p-3 rounded-lg border transition-all"
+                        style={{ 
+                          backgroundColor: isDark ? config.bgColor : config.bgColor,
+                          borderColor: config.color + '40'
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div 
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: config.color }}
+                          />
+                          <span 
+                            className="font-mono font-semibold text-xs"
+                            style={{ color: config.color }}
+                          >
+                            {config.label}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          {config.description}
                         </p>
+                        <div className="mt-2 pt-2 border-t border-border/50">
+                          <p className="text-[9px] text-muted-foreground">
+                            <strong className="text-foreground">Strategy:</strong> {
+                              key === 'Champions' ? 'Full AI transformation' :
+                              key === 'Strategic' ? 'Targeted high-impact pilots' :
+                              key === 'Quick Wins' ? 'Rapid efficiency gains' :
+                              'Build foundational capabilities'
+                            }
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

@@ -56,7 +56,7 @@ export default function Home() {
     setSelectedCompany
   } = usePortfolioData();
 
-  const [viewMode, setViewMode] = useState<ViewMode>('matrix');
+  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -168,6 +168,10 @@ export default function Home() {
             {/* View toggle - visible on tablet+ */}
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="hidden sm:block">
               <TabsList className="h-8">
+                <TabsTrigger value="dashboard" className="h-7 px-2 text-xs gap-1" title="Analytics Dashboard">
+                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden md:inline">Analytics</span>
+                </TabsTrigger>
                 <TabsTrigger value="matrix" className="h-7 px-2 text-xs gap-1" title="Matrix View">
                   <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden md:inline">Matrix</span>
@@ -175,10 +179,6 @@ export default function Home() {
                 <TabsTrigger value="list" className="h-7 px-2 text-xs gap-1" title="List View">
                   <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden md:inline">List</span>
-                </TabsTrigger>
-                <TabsTrigger value="dashboard" className="h-7 px-2 text-xs gap-1" title="Analytics Dashboard">
-                  <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden md:inline">Analytics</span>
                 </TabsTrigger>
                 <TabsTrigger value="summary" className="h-7 px-2 text-xs gap-1" title="Executive Summary">
                   <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -520,7 +520,7 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Mobile bottom navigation - quick filter indicator */}
-      {isMobile && !selectedCompany && viewMode !== 'dashboard' && (
+      {isMobile && !selectedCompany && viewMode !== 'dashboard' && viewMode !== 'summary' && (
         <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur border-t border-border p-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-0.5">
@@ -561,7 +561,7 @@ export default function Home() {
       )}
 
       {/* Add bottom padding on mobile when bottom nav is visible */}
-      {isMobile && !selectedCompany && viewMode !== 'dashboard' && <div className="h-14" />}
+      {isMobile && !selectedCompany && viewMode !== 'dashboard' && viewMode !== 'summary' && <div className="h-14" />}
     </div>
   );
 }
