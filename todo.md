@@ -46,3 +46,4 @@
 - [x] Remove download button from Use Cases section
 - [x] Remove share button from Use Cases section
 - [x] Add cross-company filtering by business function, AI primitive, and priority tier
+- [x] Remove password protection from the application

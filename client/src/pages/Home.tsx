@@ -17,7 +17,7 @@ import {
   Sun, 
   Menu,
   Filter,
-  LogOut,
+
   BarChart3,
   HelpCircle,
   FileText
@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { usePortfolioData } from '@/hooks/usePortfolioData';
 import { IFMMatrix } from '@/components/IFMMatrix';
 import { CompanyDetail } from '@/components/CompanyDetail';
@@ -45,7 +45,7 @@ type ViewMode = 'matrix' | 'list' | 'dashboard' | 'summary' | 'usecases';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
-  const { logout, isAuthenticated } = useAuth();
+  
   const isDark = theme === 'dark';
   const { 
     data, 
@@ -213,16 +213,6 @@ export default function Home() {
               )}
             </Button>
 
-            {/* Logout button - desktop */}
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="h-8 w-8 hidden sm:flex"
-              onClick={logout}
-              title="Sign out"
-            >
-              <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </Button>
 
             {/* Mobile menu / filter button */}
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -260,15 +250,7 @@ export default function Home() {
                           AI
                         </span>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={logout}
-                        className="text-xs h-7"
-                      >
-                        <LogOut className="h-3.5 w-3.5 mr-1" />
-                        Sign out
-                      </Button>
+
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1">
                       StonePeak Impact-Feasibility Matrix
